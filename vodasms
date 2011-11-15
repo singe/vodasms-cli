@@ -1,0 +1,249 @@
+#!/usr/bin/perl -w
+#location of user installed modules e.g. WWW::Mechanize (Mechanize.pm)
+#this is useful if not root and unable to install necessary modules
+#BEGIN { unshift @INC, qw(/home/user/bin/perlmods); }
+
+#Created by singe@rucus.net
+#Based on an idea originally by vhata@rucus.net
+#Script written to make using the vodacom4me service a little less horrendous.
+
+#This script is licensed under the GPL
+#Use of this script may be illegal, do so at your own risk
+
+#June 3rd 2006
+
+use strict;
+use warnings;
+use Config::IniFiles;
+use WWW::Mechanize;
+
+#---Config Vars---#
+#Get homedir
+my $home=(getpwuid($<))[7];
+
+#Location of config file, by default same dir as script
+my $configfile = "$home/.vodasms/vodasms.ini";
+my $cfg = new Config::IniFiles( -file => $configfile );
+
+#Vodacom4me cell numbers
+my $username=$cfg->val( 'login', 'username' );
+#Password
+my $password=$cfg->val( 'login', 'password' );
+
+#Location of phonebook (format Name:Number)
+my $phonenums=$cfg->val( 'files', 'phonebook' );
+$phonenums =~ s[^~][$home];
+
+#Location of log file
+my $log=$cfg->val( 'files', 'log' );
+$log =~ s[^~][$home];
+
+#Location of forms
+my $loginform=$cfg->val( 'files', 'loginform' );
+$loginform =~ s[^~][$home];
+my $sendform=$cfg->val( 'files', 'sendform' );
+$sendform =~ s[^~][$home];
+
+#Proxy
+my $proxy=$cfg->val( 'network', 'proxy' );
+
+#General Options#
+#Display number of sms'es left
+my $sms_left=$cfg->val( 'options', 'sms_left' );
+
+#You probally shouldn't change these
+my $maxlength=$cfg->val( 'sms', 'maxlength' );
+my $maxmsgs=$cfg->val( 'sms', 'maxmsgs' );
+
+#---End Config Vars---#
+
+#Get user input
+sub get_input {
+	my ($num,@msg)=@_;
+
+	my $msg="@msg";
+
+	return ($num,$msg);
+}
+
+#Check phonebook
+sub phonebook_lookup {
+	my ($num) = @_;
+	my $name="";
+
+	if($num=~m/^[a-z]/i) {
+		open FIL, $phonenums;
+		while(<FIL>) {
+			chomp;
+			my ($nname,$nnum)=split(/:/);
+			if($nname=~/^$num$/i) {
+				$num=$nnum;
+				$name=$nname;
+				print "Using ${nname}'s number ($num)\n";
+			}
+		}
+		close FIL;
+	}
+
+	return $num,$name;
+}
+
+#Perform sanity checks
+sub check_sanity {
+	my ($num,$msg) = @_;
+
+	$num =~ s/^\+?27/0/;
+	if($num !~ m/^0(7|8)(2|6)\d{7}/) {
+		print "That doesn't appear to be a vodacom (082/072) number.\n";
+		exit;
+	}
+	else {
+		die "Message too long.\n" if length($msg)>$maxlength;
+	}
+	return $num;
+}
+
+#Work out number of messages to be sent
+sub num_msgs {
+	my ($msg) = @_;
+
+   use integer;
+   my $nummsgs = (length($msg)/(($maxlength/$maxmsgs)+1))+1;
+   if ($nummsgs > $maxmsgs) {
+      $nummsgs = $maxmsgs;
+   }
+
+	return $nummsgs;
+}
+
+#Notify user and log message
+sub log_n_print {
+	my ($num,$msg,$name) = @_;
+
+   print "Attempting to send '$msg' to $num...\n";
+   open FIL, ">> ".$log;
+   print FIL localtime(time)." '$msg' to $name $num\n";
+   close FIL;
+}
+
+#Initialise Browser
+sub browser_init {
+   my $browser = WWW::Mechanize->new( autocheck=>1 );
+   $browser->agent_alias("Linux Mozilla");
+   $browser->proxy('http',$proxy);
+
+	return $browser;
+}
+
+#Login
+sub login {
+	 my ($user,$pass,$browser) = @_;
+
+	#Fetch the login page
+   $browser->get("file:///$loginform");
+
+	#Send login details
+   $browser->submit_form(
+		form_number => 1,
+      fields => {
+         V_LOGIN_NAME => $user,
+         V_PASSWORD => $pass
+      },
+		button => 'image'
+   );
+	return $browser;
+}
+
+#Send SMS
+sub send_sms {
+	my ($num,$msg,$browser) = @_;
+
+	#Goto the SMS page
+   $browser->get("file:///$sendform");
+
+	#Send the SMS
+	$browser->submit_form(
+		form_name => "smsForm",
+		fields => {
+			'message.recipient' => $num,
+			'message.message' => $msg
+		},
+		button => 'SendSMSButton'
+	);
+
+	return $browser;
+}
+
+#Log out
+sub log_out {
+	my ($browser) = @_;
+	$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/logout.do");
+	return $browser;
+}
+
+#Check status and log out
+sub check_success {
+	my ($msg,$nummsgs,$browser) = @_;
+	
+	#Check for a successful send
+	if ( $browser->success() ) {
+      print "The SMS of length ".length($msg)." has been sent in ".$nummsgs." sms'es.\n";
+   }
+   else {
+		my $err = $browser->res();
+		$browser = log_out($browser);
+      die "There was an error trying to send the SMS:".$err."\n";
+   }
+	return $browser;
+}
+
+#Fetch and display the number of sms'es remaining
+sub smses_left {
+	my ($browser) = @_;
+	my $sms;
+
+	if ($sms_left) {
+		$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/homepage.do?operation=init");
+		$sms = $browser->content();
+		
+		#This code is sensitive to changes by Vodacom, it assumes the following HTML
+		#line:
+		#<span class="vodacomblue">&raquo;Free SMS's left =</span><span class="vodacomgreen"> 18 of 20 <a href="/vodacom4me-personal/sendSMS.do?operation=init" class="breadcrumb">&raquo;send now</a></span>
+		while($sms =~ s/.*?Free SMS's left.*?"> (.*?) of 20//) {
+			$sms=$1;
+		}
+
+		print "You have ".$sms." sms'es left.\n";
+	}
+	return $sms,$browser;
+}
+
+#Main Control Procedure
+sub start {
+	#Var definitions
+	my $num; my $name; my $msg; my $nummsgs; my $sms; my $browser;
+	
+	($num,$msg) = get_input(@ARGV);
+	($num,$name) = phonebook_lookup($num);
+	$num = check_sanity($num,$msg);
+	$nummsgs = num_msgs($msg);
+	log_n_print($num,$msg,$name);
+	$browser = browser_init();
+	$browser = login($username,$password,$browser);
+	$browser = send_sms($num,$msg,$browser);
+	$browser = check_success($msg,$nummsgs,$browser);
+	($sms,$browser) = smses_left($browser);
+	$browser = log_out($browser);
+
+	##DEBUG Code
+	#print "Num:$num, Name:$name, NumMsgs:$nummsgs, Msg:$msg, Browser:$browser\n";
+	#print "\n\n Status : ".$browser->success()."\n";
+	#print $browser->content();
+	#print "\n\n URI : ".$browser->uri() ."\n";
+	#print "\n\n Cookie : ".$browser->cookie_jar->as_string()."\n";
+	#$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/logout.do");
+	#die "DEBUG";
+}
+
+#Run it
+start();

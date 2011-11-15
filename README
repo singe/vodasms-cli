@@ -1,0 +1,51 @@
+VodaSMS
+
+This program was written to avoid the horrors of the Vodacom4me website
+(http://www.vodacom4me.co.za). It allows you to do all sorts of things with
+your sms account without having to leave the comfort of your command line.
+
+Getting Started
+---------------
+
+* Extract the vodasms tarball, I assume you have already done that if you are
+  reading this. I like to put everything into ~/.vodasms/ .
+
+* Edit the configuration file, vodasms.ini, to include the relevant
+  information. The configuration file needs to be in the ~/.vodasms/ directory.
+  If you would like to change that edit the configfile variable at the top of
+  the 'vodasms' script.
+
+* Ensure that the perl modules WWW::Mechanize and Config:IniFiles are
+  installed. If you are not root then put them somewhere, uncomment and
+  update the BEGIN line at the top of the vodasms script.
+
+* Look at the example phonebook provided and create a phonebook. This is not
+  mandatory as normal phone numbers can be used.
+
+* Send an sms.
+
+Usage
+-----
+
+vodasms [number|name from phonebook] <message>
+
+e.g.
+vodasms +27821234567 hello
+vodasms Dominic "hello"
+
+Testing
+-------
+
+My number is in the default phonebook, and I like getting sms'es. So send me an
+sms telling me what you think.
+
+vodasms Dominic "OMFG I have never seen such awful Perl, and that's saying a lot\!"
+
+License
+-------
+
+This software is licensed under the GPLv2 by Dominic White
+(http://singe.rucus.net/)
+
+The use of the software may be illegal and the user does so at their own risk.
+This software is provided for demonstration/educational use only.

@@ -1,0 +1,10 @@
+2nd June 2006:
+* Added support for displaying the number of sms'es left.
+* Rewrote the innards to be more modular.
+* Added Config::IniFiles to the included perlmods
+
+21st April 2006:
+* Minor change to mirror URL change in login page
+
+16th August 2005:
+* Initial release for new vodacom4me site.
