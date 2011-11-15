@@ -1,3 +1,8 @@
+1st March 2011:
+* Updated for the new Vodacom portal & msg sending. Significant changes required.
+* Added usage output when no params
+* Added a real dirty install.sh
+
 2nd June 2006:
 * Added support for displaying the number of sms'es left.
 * Rewrote the innards to be more modular.

@@ -1,16 +1,16 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #location of user installed modules e.g. WWW::Mechanize (Mechanize.pm)
 #this is useful if not root and unable to install necessary modules
 #BEGIN { unshift @INC, qw(/home/user/bin/perlmods); }
 
-#Created by singe@rucus.net
+#Created by singe (http://singe.za.net/)
 #Based on an idea originally by vhata@rucus.net
 #Script written to make using the vodacom4me service a little less horrendous.
 
 #This script is licensed under the GPL
-#Use of this script may be illegal, do so at your own risk
+#Use of this script may violate Voacom's terms of service, do so at your own risk
 
-#June 3rd 2006
+#Jan 1st 2011
 
 use strict;
 use warnings;
@@ -59,8 +59,17 @@ my $maxmsgs=$cfg->val( 'sms', 'maxmsgs' );
 
 #Get user input
 sub get_input {
-	my ($num,@msg)=@_;
+	# Check for blanks
+	if (@_ == 0) {
+		print "VodaSMS by Dominic White\n";
+		print "\tusage: vodasms <number|phonebook name> <msg>\n";
+		print "You may need to \"quote\" the message.\n";
+		print "Check the config .ini for settings.\n";
+		exit;
+	}
 
+	# Read input
+	my ($num,@msg)=@_;
 	my $msg="@msg";
 
 	return ($num,$msg);
@@ -146,10 +155,10 @@ sub login {
    $browser->submit_form(
 		form_number => 1,
       fields => {
-         V_LOGIN_NAME => $user,
-         V_PASSWORD => $pass
+         logon => $user,
+         password => $pass
       },
-		button => 'image'
+		button => 'submit'
    );
 	return $browser;
 }
@@ -159,14 +168,14 @@ sub send_sms {
 	my ($num,$msg,$browser) = @_;
 
 	#Goto the SMS page
-   $browser->get("file:///$sendform");
+	$browser->get("file:///$sendform");
 
 	#Send the SMS
 	$browser->submit_form(
 		form_name => "smsForm",
 		fields => {
-			'message.recipient' => $num,
-			'message.message' => $msg
+			'hiddenDestinationNumber' => $num,
+			'messageBody' => $msg
 		},
 		button => 'SendSMSButton'
 	);
@@ -177,11 +186,11 @@ sub send_sms {
 #Log out
 sub log_out {
 	my ($browser) = @_;
-	$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/logout.do");
+	$browser->get("https://www.vodacom.co.za/portal/site/myaccount/template.LOGOUT/");
 	return $browser;
 }
 
-#Check status and log out
+#Check status
 sub check_success {
 	my ($msg,$nummsgs,$browser) = @_;
 	
@@ -191,7 +200,7 @@ sub check_success {
    }
    else {
 		my $err = $browser->res();
-		$browser = log_out($browser);
+		#$browser = log_out($browser);
       die "There was an error trying to send the SMS:".$err."\n";
    }
 	return $browser;
@@ -203,15 +212,16 @@ sub smses_left {
 	my $sms;
 
 	if ($sms_left) {
-		$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/homepage.do?operation=init");
+		$browser->get("https://www.vodacom.co.za/portal/site/myaccount/freemessaging/");
 		$sms = $browser->content();
 		
 		#This code is sensitive to changes by Vodacom, it assumes the following HTML
 		#line:
-		#<span class="vodacomblue">&raquo;Free SMS's left =</span><span class="vodacomgreen"> 18 of 20 <a href="/vodacom4me-personal/sendSMS.do?operation=init" class="breadcrumb">&raquo;send now</a></span>
-		while($sms =~ s/.*?Free SMS's left.*?"> (.*?) of 20//) {
+		#&nbsp;&nbsp;Free SMS's Left today: 20</td>
+		while($sms =~ s/.*Free SMS's Left today: (..)//) {
 			$sms=$1;
 		}
+		#$sms =~ s/.*Left today: (.*?)<\/td>/$1/;
 
 		print "You have ".$sms." sms'es left.\n";
 	}
@@ -241,7 +251,7 @@ sub start {
 	#print $browser->content();
 	#print "\n\n URI : ".$browser->uri() ."\n";
 	#print "\n\n Cookie : ".$browser->cookie_jar->as_string()."\n";
-	#$browser->get("http://www.vodacom4me.co.za/vodacom4me-personal/logout.do");
+	$browser = log_out($browser);
 	#die "DEBUG";
 }
 

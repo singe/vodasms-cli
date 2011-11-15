@@ -1,8 +1,9 @@
 VodaSMS
 
-This program was written to avoid the horrors of the Vodacom4me website
-(http://www.vodacom4me.co.za). It allows you to do all sorts of things with
-your sms account without having to leave the comfort of your command line.
+This program was initialy written to avoid the horrors of the Vodacom4me
+website since rebranded as the Vodacom Portal (http://www.vodacom.co.za). It
+allows you to do all sorts of things with your sms account without having to
+leave the comfort of your command line.
 
 Getting Started
 ---------------
@@ -24,10 +25,12 @@ Getting Started
 
 * Send an sms.
 
+* There is a very quick 'n dirty install script that will do some of this for you. From the tarball extracted directory run ./install.sh
+
 Usage
 -----
 
-vodasms [number|name from phonebook] <message>
+vodasms <number|name from phonebook> <message>
 
 e.g.
 vodasms +27821234567 hello
@@ -39,13 +42,14 @@ Testing
 My number is in the default phonebook, and I like getting sms'es. So send me an
 sms telling me what you think.
 
+e.g.
 vodasms Dominic "OMFG I have never seen such awful Perl, and that's saying a lot\!"
 
 License
 -------
 
 This software is licensed under the GPLv2 by Dominic White
-(http://singe.rucus.net/)
+(http://singe.za.net/)
 
 The use of the software may be illegal and the user does so at their own risk.
 This software is provided for demonstration/educational use only.

@@ -1,21 +1,23 @@
 <html>
 <head><title>i.hate.vodacom4me</title></head>
 <body>
-<form name="smsForm" method="post" action="http://www.vodacom4me.co.za/vodacom4me-personal/sendSMS.do?operation=init&send=yes">
-<input type="hidden" name="picture" value="null.gif" /><br />
-<input type="text" name="message.recipient" size="50" value="" /><br />
-<textarea name="message.message" cols="40" rows="5"style="width:290pt"></textarea><br />
+<!--<form name="smsForm" method="post" action="URL=https://www.vodacom.co.za/portal/site/myaccount/template.PAGE/action.process/freemessaging/?javax.portlet.action=true&javax.portlet.tpst=214d238c7916ac93197bd620413f37a0&javax.portlet.prp_214d238c7916ac93197bd620413f37a0=SendSMS%3DSendSMS&javax.portlet.begCacheTok=com.vignette.cachetoken&javax.portlet.endCacheTok=com.vignette.cachetoken">-->
+<form name="smsForm" method="post" action="https://www.vodacom.co.za/portal/site/myaccount/template.PAGE/action.process/freemessaging/?javax.portlet.action=true&javax.portlet.tpst=214d238c7916ac93197bd620413f37a0&javax.portlet.prp_214d238c7916ac93197bd620413f37a0=SendSMS%3DSendSMS&javax.portlet.begCacheTok=com.vignette.cachetoken&javax.portlet.endCacheTok=com.vignette.cachetoken">
+<input type="hidden" name="recipient" value="" /><br />
+<input type="hidden" name="contactListBox" value="0" /><br />
+<input type="hidden" name="futureSMSTime" value="now" /><br />
+<input type="hidden" name="sendDate" value="" /><br />
+
+<textarea name="messageBody" cols="40" rows="5"style="width:290pt"></textarea><br />
+<input type="text" name="hiddenDestinationNumber" size="50" value="" /><br />
+
+<input type="hidden" name="hiddenName" value="" /><br />
+<input type="hidden" name="hiddenSaveSMS" value="" /><br />
+<input type="hidden" name="scheduledSMS" value="" /><br />
+<input type="hidden" name="hideCurrentSelectedDestination" value="" /><br />
+
 <input type="submit" name="SendSMSButton" value="Send SMS" />
-<p />
-<select name="QuickList" size="1">
-<option selected value="">--Quick list--</option>
-</select>
-<input type="button" name="Contacts" value="Contacts" />
-<input type="checkbox" name="autoPopUp" value="on" />
-<input type="checkbox" name="flashingSMS" value="on" />
-<INPUT TYPE="TEXT" NAME="charsLeft" SIZE="3" VALUE="" readonly="readonly" />
-<input type="text" name="numOfMsg" size="1" value="1" readonly="readonly" />
 </form>
-<a href="http://www.vodacom4me.co.za/vodacom4me-personal/logout.do" title="Logoff">Logoff</a>
+<a href="https://www.vodacom.co.za/portal/site/myaccount/template.LOGOUT/" title="Logoff">Logoff</a>
 </body>
 </html>
